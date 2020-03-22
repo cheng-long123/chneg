@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+  <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="js/jquery.mousewheel.js"></script>
+  <script src="js/scroll.js"></script>
+  <title>聊天机器人</title>
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- 头部 Header 区域 -->
+    <div class="header">
+      <h3>小思同学</h3>
+      <img src="img/person01.png" alt="icon" />
+    </div>
+    <!-- 中间 聊天内容区域 -->
+    <div class="main">
+      <ul class="talk_list" style="top: 0px;" id="talk_list">
+        <li class="left_word">
+          <img src="img/person01.png" /> <span>嗨，最近想我没有？</span>
+        </li>
+
+      </ul>
+      <div class="drag_bar" style="display: none;">
+        <div class="drager ui-draggable ui-draggable-handle" style="display: none; height: 412.628px;"></div>
+      </div>
+    </div>
+    <!-- 底部 消息编辑区域 -->
+    <div class="footer">
+      <img src="img/person02.png" alt="icon" />
+      <input type="text" placeholder="请输入内容..." class="input_txt" id="ipt" />
+      <input type="button" value="发 送" class="input_sub" id="btnSend" />
+    </div>
+  </div>
+  <!-- 注意：只要为 audio 指定了新的 src 属性，而且指定了 autoplay，那么，语音就会自动播放 -->
+  <audio src="" id="voice" autoplay style="display: none;"></audio>
+  <script>
+    //入口函数
+    $(function () {
+      //注册点击事件
+      $('#btnSend').on('click', function () {
+        //获取输入框的value值
+        var newWord = $('#ipt').val().trim();
+        //判断是否为空，如果为空怎什么也不做
+        if (newWord == '') {
+          return;
+        };
+        //追加的li
+        var str = `  <li class="right_word">
+          <img src="img/person02.png" /> <span>${newWord}</span>
+        </li>`;
+        //把str添加到ul中
+        $('#talk_list').append(str);
+        //发送完清空输入框
+        $('#ipt').val('');
+        //调用滚动条
+        resetui();
+        //调用回答的文本
+        getNews(newWord);
+
+      });
+
+      function getNews(text) {
+        //用户接口获取回答的信息
+        $.get('http://www.liulongbin.top:3006/api/robot', {
+          spoken: text
+        }, function (res) {
+          //
+          var str = `  <li class="left_word">
+          <img src="img/person01.png" /> <span>${res.data.info.text}</span>
+        </li>`;
+        //追加到页面
+          $('#talk_list').append(str);
+          //调用滚动条
+          resetui();
+          //把文本转换语音读出来
+          getVoice(res.data.info.text);
+       
+        });
+      };
+
+      function getVoice(voice) {
+        //用接口获取语音
+        $.get('http://www.liulongbin.top:3006/api/synthesize', {
+          text: voice
+        }, function (res) {
+       
+            //判断是否
+          if (res.status == 200) {
+            $('#voice').attr('src', res.voiceUrl);
+          };
+
+        });
+      };
+      //注册键盘按下事件
+      $('#ipt').on('keyup', function (e) {
+        //判断按下的键值是否为13
+        if (e.keyCode == 13) {
+          //如果是调用点击事件
+          $('#btnSend').click();
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
